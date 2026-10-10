@@ -514,6 +514,12 @@
     { n:'飞踢', c:'#626061', l:'#e1e0e0', r:78 }
   ];
   const MAX_LEVEL = FRUITS.length - 1;
+  // 提示文案统一用“倒数第 N 大”描述等级，不直接点名角色
+  const CN_NUM = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+  const ordinalBig = lv => {
+    const n = FRUITS.length - lv;
+    return '倒数第' + (CN_NUM[n] || n) + '大';
+  };
   // 合成出第 i 级果实的得分（三角数，越大的越值钱）
   const POINTS = [0, 1, 3, 6, 10, 15, 21, 28, 36, 45];
   const TAU = Math.PI * 2;
@@ -1142,7 +1148,7 @@
       reviveBox.innerHTML = '<button class="revive-btn" id="reviveBtn">🪙 花 ' + p.price + ' 金币复活继续</button>';
       reviveBox.querySelector('#reviveBtn').addEventListener('click', () => doRevive(false));
     } else if (!reviveGated()) {
-      reviveBox.innerHTML = '<p class="revive-hint">🪙 复活币需先合成出「' + FRUITS[REVIVE_LEVEL].n + '」<br>本局最高只到「' + FRUITS[maxLevel].n + '」</p>';
+      reviveBox.innerHTML = '<p class="revive-hint">🪙 复活币需先合成出' + ordinalBig(REVIVE_LEVEL) + '的<br>本局最高只到' + ordinalBig(maxLevel) + '</p>';
     } else {
       reviveBox.innerHTML = '<p class="revive-hint">🪙 复活需要 ' + p.price + ' 金币<br>金币还差 ' + (p.price - coins) + '</p>';
     }
@@ -1365,7 +1371,7 @@
       html += '<div class="shop-row">'
         + '<span class="si">' + p.icon + '</span>'
         + '<div class="sx"><b>' + p.name + '</b><small>' + p.desc + '</small>'
-        + (locked ? '<span class="shop-gate">🔒 需先合成出「' + FRUITS[REVIVE_LEVEL].n + '」</span>' : '')
+        + (locked ? '<span class="shop-gate">🔒 需先合成出' + ordinalBig(REVIVE_LEVEL) + '的</span>' : '')
         + '</div><div class="sa">'
         + (canUse ? '<button class="shop-buy use" data-use="' + p.id + '">使用</button>' : '')
         + '<button class="shop-buy" data-buy="' + p.id + '"'
