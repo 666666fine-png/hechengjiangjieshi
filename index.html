@@ -147,6 +147,7 @@
     background:rgba(255,255,255,.9);
     box-shadow:var(--shadow-sm);
     font-size:12.5px; letter-spacing:.06em; color:var(--ink-soft);
+    white-space:nowrap;
     pointer-events:none;
     animation:floaty 2.4s ease-in-out infinite;
     transition:opacity .4s ease, transform .4s ease;
@@ -939,11 +940,53 @@
     aimX = clamp(x, lim.min, lim.max);
   }
   // 浏览器坐标 -> 逻辑坐标
+  function toLogical(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return null;
+    return {
+      x: (clientX - rect.left) / rect.width * W,
+      y: (clientY - rect.top) / rect.height * H
+    };
+  }
   function aimToClient(clientX) {
     const rect = canvas.getBoundingClientRect();
     if (!rect.width) return;
     aimTo((clientX - rect.left) / rect.width * W);
   }
+
+  // 触屏/触控笔：警戒线以上按住 = 拖动瞄准，警戒线以下点按 = 掉落
+  // （鼠标有悬停，保持原来的“移动瞄准 + 点击掉落”，不受分区限制）
+  let dragging = false;
+  let touchMode = false;
+
+  function useTouchHint() {
+    if (touchMode) return;
+    touchMode = true;
+    hint.textContent = '上方按住拖动瞄准 · 点下方掉落';
+    hint.classList.remove('hide');
+    setTimeout(() => { if (state === 'playing') hint.classList.add('hide'); }, 5200);
+  }
+
+  function onPress(clientX, clientY, isTouch) {
+    if (isTouch) useTouchHint();
+    const p = toLogical(clientX, clientY);
+    if (!p) return;
+    if (isTouch && p.y < DEATH_Y) {   // 警戒线以上：进入拖动瞄准，不掉落
+      dragging = true;
+      aimTo(p.x);
+      return;
+    }
+    dragging = false;
+    aimTo(p.x);
+    drop();
+  }
+
+  function onDrag(clientX) {
+    if (dragging) { aimToClient(clientX); return; }
+    if (!touchMode) aimToClient(clientX);   // 鼠标悬停瞄准
+  }
+
+  function endDrag() { dragging = false; }
 
   function drop() {
     if (state !== 'playing' || cooldown > 0) return;
@@ -961,26 +1004,35 @@
     Sound.play('drop');
   }
 
-  stage.addEventListener('pointermove', e => { aimToClient(e.clientX); }, { passive: true });
+  stage.addEventListener('pointermove', e => {
+    if (e.pointerType === 'mouse' && dragging) endDrag();
+    onDrag(e.clientX);
+  }, { passive: true });
   stage.addEventListener('pointerdown', e => {
     // 只响应主指针的左键：右键/中键/触控板双指点按不应掉落果实
     if (e.button !== 0 || e.isPrimary === false) return;
     Sound.unlock();
     if (state === 'over') return;
-    aimToClient(e.clientX);
-    drop();
+    if (e.pointerType !== 'mouse') {
+      try { stage.setPointerCapture(e.pointerId); } catch (err) { /* 忽略 */ }
+    }
+    onPress(e.clientX, e.clientY, e.pointerType !== 'mouse');
     if (e.cancelable) e.preventDefault();
   });
+  stage.addEventListener('pointerup', endDrag);
+  stage.addEventListener('pointercancel', endDrag);
+  stage.addEventListener('lostpointercapture', endDrag);
   // 触屏兜底（部分老浏览器没有 PointerEvent）
   if (!window.PointerEvent) {
-    stage.addEventListener('touchmove', e => { if (e.touches.length === 1) aimToClient(e.touches[0].clientX); }, { passive: true });
+    stage.addEventListener('touchmove', e => { if (e.touches.length === 1) onDrag(e.touches[0].clientX); }, { passive: true });
     stage.addEventListener('touchstart', e => {
       if (e.touches.length !== 1) return;
       Sound.unlock();
       if (state === 'over') return;
-      aimToClient(e.touches[0].clientX);
-      drop();
+      onPress(e.touches[0].clientX, e.touches[0].clientY, true);
     }, { passive: true });
+    stage.addEventListener('touchend', endDrag);
+    stage.addEventListener('touchcancel', endDrag);
   }
   stage.addEventListener('contextmenu', e => e.preventDefault());
   stage.addEventListener('dragstart', e => e.preventDefault());
@@ -1172,6 +1224,30 @@
     drawFruit(b.x, b.y, b.r, b.level, b.angle, pop, b.squash, b.snx, b.sny);
   }
 
+  // 触屏：把上半区（警戒线以上）画成“按住可拖动瞄准”的区域（画在果实下面）
+  function drawTouchZone() {
+    if (!touchMode || state !== 'playing') return;
+    ctx.save();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = dragging ? 0.40 : 0.20;
+    ctx.fillStyle = dragging ? 'rgba(255,170,202,0.8)' : 'rgba(255,205,225,0.7)';
+    ctx.fillRect(0, 0, W, DEATH_Y);
+    ctx.globalAlpha = dragging ? 0.9 : 0.4;
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(255,140,180,0.95)';
+    ctx.beginPath();
+    ctx.moveTo(0, DEATH_Y);
+    ctx.lineTo(W, DEATH_Y);
+    ctx.stroke();
+    ctx.globalAlpha = dragging ? 0.95 : 0.6;
+    ctx.fillStyle = '#b8456e';
+    ctx.font = '600 11px "PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(dragging ? '拖动瞄准中…' : '按住这里拖动瞄准', W - 8, DEATH_Y - 5);
+    ctx.restore();
+  }
+
   function drawAim() {
     if (state !== 'playing') return;
     const f = FRUITS[pendingLevel];
@@ -1185,11 +1261,11 @@
     if (dim !== badgeDim) { badgeDim = dim; badge.classList.toggle('dim', dim); }
 
     ctx.save();
-    // 瞄准虚线
-    ctx.globalAlpha = ready ? 0.42 : 0.14;
+    // 瞄准虚线（拖动时更粗更亮）
+    ctx.globalAlpha = dragging ? 0.8 : (ready ? 0.42 : 0.14);
     ctx.setLineDash([7, 11]);
     ctx.lineDashOffset = -dropTimer * 26;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = dragging ? 3 : 2;
     ctx.strokeStyle = f.c;
     ctx.beginPath();
     ctx.moveTo(x, f.r * 2 + 10);
@@ -1250,6 +1326,7 @@
   function render(dt) {
     ctx.clearRect(0, 0, W, H);
     drawBackdrop();
+    drawTouchZone();     // 触屏拖动区提示（画在果实下面）
     drawDeathLine();
     drawOrder.length = 0;
     for (let i = 0; i < balls.length; i++) drawOrder.push(balls[i]);
