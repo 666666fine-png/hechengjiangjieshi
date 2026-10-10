@@ -90,6 +90,31 @@
   }
   .icon-btn:active{ transform:scale(.93); }
   .icon-btn.off{ filter:grayscale(1); opacity:.55; }
+  /* 顶栏里和声音按钮同尺寸的方形按钮（商店 / 打赏） */
+  .icon-btn.sq{
+    width:40px; height:40px;
+    font-size:12px; font-weight:700; letter-spacing:0;
+    display:inline-flex; align-items:center; justify-content:center;
+    white-space:nowrap; line-height:1;
+    text-decoration:none; font-family:inherit;
+  }
+  a.icon-btn.sq{ color:#e2648d; border-color:#ffd3e4; background:#fff6fa; }
+  .icon-btn.sq{ position:relative; }
+  /* 有东西买得起时的小红点 */
+  .icon-btn.sq .dot{
+    position:absolute; top:-3px; right:-3px;
+    width:10px; height:10px; border-radius:50%;
+    background:#ff4d6d; border:2px solid #fff;
+    box-shadow:0 1px 3px rgba(255,77,109,.45);
+    opacity:0; transform:scale(.4);
+    transition:opacity .18s ease, transform .18s cubic-bezier(.2,1.6,.4,1);
+    pointer-events:none;
+  }
+  .icon-btn.sq .dot.show{ opacity:1; transform:scale(1); animation:dotPulse 1.6s ease-in-out infinite; }
+  @keyframes dotPulse{ 0%,100%{ box-shadow:0 1px 3px rgba(255,77,109,.45) } 50%{ box-shadow:0 0 0 4px rgba(255,77,109,.16) } }
+  a.icon-btn.sq:hover{ filter:brightness(1.03); }
+  a.icon-btn.sq:active{ transform:scale(.93); }
+  .icon-btn.sq.spent{ opacity:.5; }
   .text-btn{
     padding:0 18px; height:40px;
     border-radius:14px;
@@ -105,7 +130,7 @@
 
   /* ---------- 游戏区 ---------- */
   .stage{
-    --w: min(92vw, 420px, max(210px, calc((100vh - 232px) * 0.6667)));
+    --w: min(92vw, 420px, max(210px, calc((100vh - 200px) * 0.6667)));
     position:relative;
     width:var(--w);
     height:calc(var(--w) * 1.5);
@@ -190,6 +215,88 @@
   .panel .record{ min-height:20px; font-size:13px; color:#f0a03c; font-weight:700; }
   .panel .text-btn{ margin-top:14px; }
 
+  /* ---------- 复活 ---------- */
+  .revive{ margin-top:12px; min-height:0; }
+  .revive .revive-btn{
+    display:block; width:100%; padding:10px 12px;
+    border-radius:14px; border:2px solid #ffd98a;
+    background:linear-gradient(180deg,#fff6df 0%,#ffeab8 100%);
+    color:#a9701a; font-size:13.5px; font-weight:800; letter-spacing:.02em;
+    box-shadow:0 4px 10px rgba(214,164,60,.22);
+    transition:transform .12s ease, filter .18s ease;
+  }
+  .revive .revive-btn:hover{ filter:brightness(1.03); }
+  .revive .revive-btn:active{ transform:translateY(1px) scale(.98); }
+  .revive .revive-hint{
+    margin:0; font-size:11.5px; line-height:1.45; color:#b09a86;
+  }
+
+  /* ---------- 小商店 ---------- */
+  .shop{
+    position:absolute; inset:0; z-index:6;
+    display:grid; place-items:center;
+    background:rgba(255,250,252,.72);
+    -webkit-backdrop-filter:blur(5px); backdrop-filter:blur(5px);
+    opacity:0; pointer-events:none; transition:opacity .22s ease;
+  }
+  .shop.show{ opacity:1; pointer-events:auto; }
+  .shop-panel{
+    width:88%; max-width:340px;
+    max-height:88%;
+    overflow:auto;
+    padding:12px;
+    background:var(--card);
+    border-radius:18px;
+    border:3px solid #ffe6f0;
+    box-shadow:var(--shadow-lg);
+    transform:translateY(10px) scale(.96);
+    transition:transform .26s cubic-bezier(.2,1.5,.45,1);
+  }
+  .shop.show .shop-panel{ transform:none; }
+  .shop-head{
+    display:flex; align-items:center; gap:8px;
+    padding-bottom:8px; margin-bottom:8px;
+    border-bottom:2px dashed #ffe0ee;
+  }
+  .shop-title{ font-size:14px; font-weight:800; color:#5b4767; }
+  .shop-coins{ margin-left:auto; font-size:11.5px; color:var(--ink-soft); }
+  .shop-coins b{ font-size:15px; color:#e08a1e; font-variant-numeric:tabular-nums; }
+  .shop-close{
+    width:26px; height:26px; border-radius:9px; border:none;
+    background:#fff0f6; color:#c9557f; font-size:13px; line-height:1;
+    cursor:pointer;
+  }
+  .shop-row{
+    display:flex; align-items:center; gap:8px;
+    padding:8px 2px; border-bottom:1px solid #f6eef4;
+  }
+  .shop-row:last-child{ border-bottom:none; }
+  .shop-row .si{ font-size:19px; width:24px; text-align:center; flex:0 0 auto; }
+  .shop-row .sx{ flex:1 1 auto; min-width:0; }
+  .shop-row .sx b{ display:block; font-size:13px; color:#5b4767; }
+  .shop-row .sx small{ display:block; font-size:10.5px; line-height:1.35; color:var(--ink-soft); }
+  .shop-row .sa{ flex:0 0 auto; text-align:right; }
+  .shop-buy{
+    padding:6px 10px; border-radius:10px; border:none;
+    font-size:12px; font-weight:800; color:#fff;
+    background:linear-gradient(180deg,#ffb35c 0%,#f79a34 100%);
+    box-shadow:0 3px 8px rgba(230,150,60,.3);
+  }
+  .shop-buy.use{ background:linear-gradient(180deg,#8fd9b6 0%,#57c79c 100%); box-shadow:0 3px 8px rgba(80,190,150,.3); }
+  .shop-buy:disabled{ background:#e9e2ea; color:#a99fae; box-shadow:none; cursor:not-allowed; }
+  .shop-own{ display:block; margin-top:3px; font-size:10px; color:var(--ink-soft); }
+  .shop-gate{ display:block; margin-top:2px; font-size:10px; color:#d9803c; font-weight:700; }
+  .shop-picker{ display:none; gap:6px; padding:8px 2px 2px; flex-wrap:wrap; justify-content:center; }
+  .shop-picker.show{ display:flex; }
+  .shop-picker img{
+    width:40px; height:40px; object-fit:contain; cursor:pointer;
+    padding:3px; border-radius:12px; background:#fff7fb; border:2px solid #ffe0ee;
+    transition:transform .12s ease, border-color .15s ease;
+  }
+  .shop-picker img:hover{ border-color:#ff9dbe; }
+  .shop-picker img:active{ transform:scale(.9); }
+  .shop-picker .pk-tip{ width:100%; text-align:center; font-size:11px; color:var(--ink-soft); }
+
   /* ---------- 赞助（爱发电） ---------- */
   /* 结算面板里的赞助标语 + 明显可点的超链接 */
   .sponsor-card{
@@ -226,18 +333,6 @@
   a.sponsor-url:visited{ color:#7b6bb5; }
 
   .foot{ display:flex; flex-direction:column; align-items:center; gap:7px; }
-  a.sponsor-link{
-    font-size:12px; letter-spacing:.03em; line-height:1.5;
-    color:#c86f95; text-decoration:none;
-    padding:6px 14px; border-radius:999px;
-    background:rgba(255,255,255,.78);
-    border:1.5px dashed #ffc9dd;
-    transition:color .18s ease, border-color .18s ease, transform .12s ease, box-shadow .18s ease;
-  }
-  a.sponsor-link u{ text-decoration-color:#ff9dbe; text-underline-offset:2px; }
-  a.sponsor-link:hover{ color:#e2648d; border-color:#ff9dbe; box-shadow:0 4px 12px rgba(255,127,168,.18); }
-  a.sponsor-link:hover u{ text-decoration-color:#e2648d; }
-  a.sponsor-link:active{ transform:scale(.97); }
 
   /* ---------- 底部进化链 ---------- */
   .chain{
@@ -249,8 +344,25 @@
   .chain img{ width:24px; height:24px; object-fit:contain; display:block; }
   .chain .arrow{ font-size:11px; color:#c9bdd2; margin:0 1px; }
   @media (max-height:700px){ .chain{ display:none; } }
-  @media (max-height:600px){ .sponsor-link{ font-size:11px; padding:3px 10px; } }
-  @media (max-width:360px){ .chip{ min-width:76px; padding:5px 10px; } .chip .value{ font-size:19px; } }
+  /* 窄屏：压紧顶栏，保证 分数/最高分 + 商店/打赏/声音/重开 一行放得下 */
+  @media (max-width:420px){
+    .hud{ gap:6px; }
+    .chip{ min-width:70px; padding:5px 10px; }
+    .chip .value{ font-size:20px; }
+    .hud-actions{ gap:6px; }
+    .icon-btn.sq{ width:38px; height:38px; font-size:11.5px; }
+    .icon-btn{ width:38px; height:38px; font-size:17px; }
+    .text-btn{ padding:0 12px; height:38px; font-size:13.5px; letter-spacing:.02em; }
+  }
+  @media (max-width:360px){
+    .chip{ min-width:62px; padding:4px 8px; }
+    .chip .label{ font-size:10px; }
+    .chip .value{ font-size:18px; }
+    .hud-actions{ gap:5px; }
+    .icon-btn.sq{ width:34px; height:34px; font-size:10.5px; }
+    .icon-btn{ width:34px; height:34px; font-size:15px; }
+    .text-btn{ padding:0 10px; height:34px; font-size:12.5px; }
+  }
 </style>
 </head>
 <body>
@@ -265,6 +377,8 @@
       <span class="value" id="bestValue">0</span>
     </div>
     <div class="hud-actions">
+      <button class="icon-btn sq" id="shopBtn" title="金币商店" aria-label="金币商店">商店<span class="dot" id="shopDot"></span></button>
+      <a class="icon-btn sq" id="tipBtn" href="https://afdian.com/a/8093a" target="_blank" rel="noopener noreferrer" title="打赏作者" aria-label="打赏作者">打赏</a>
       <button class="icon-btn" id="soundBtn" title="音效开关" aria-label="音效开关">🔊</button>
       <button class="text-btn" id="restartBtn">重开</button>
     </div>
@@ -273,7 +387,20 @@
   <div class="stage" id="stage">
     <canvas id="game" width="400" height="600"></canvas>
     <div class="badge">下一个 <img class="next-img" id="nextSprite" alt="" /></div>
-    <div class="hint" id="hint">移动瞄准 · 点击掉落</div>
+    <div class="hint" id="hint">按住拖动瞄准 · 松手掉落</div>
+
+    <div class="shop" id="shop">
+      <div class="shop-panel">
+        <div class="shop-head">
+          <span class="shop-title">🛒 小商店</span>
+          <span class="shop-coins">🪙 金币 <b id="shopCoins">0</b></span>
+          <button class="shop-close" id="shopClose" aria-label="关闭">✕</button>
+        </div>
+        <div class="shop-list" id="shopList"></div>
+        <div class="shop-picker" id="shopPicker"></div>
+      </div>
+    </div>
+
     <div class="gameover" id="gameover">
       <div class="panel">
         <img class="over-img" id="overSprite" alt="" />
@@ -281,6 +408,7 @@
         <p>本局得分 <b id="finalScore">0</b></p>
         <p class="record" id="recordLine"></p>
         <button class="text-btn big" id="againBtn">再来一局</button>
+        <div class="revive" id="reviveBox"></div>
         <div class="sponsor-card">
           <div class="sponsor-slogan">🧋 觉得好玩？请作者喝杯奶茶吧！</div>
           <a class="sponsor-btn" id="sponsorPanel" href="https://afdian.com/a/8093a" target="_blank" rel="noopener noreferrer">☕ 点我赞助 · 爱发电</a>
@@ -292,9 +420,6 @@
 
   <footer class="foot">
     <div class="chain" id="chain" aria-hidden="true"></div>
-    <a class="sponsor-link" id="sponsorFoot" href="https://afdian.com/a/8093a" target="_blank" rel="noopener noreferrer">
-      🧋 觉得好玩？<u>点这里请作者一杯奶茶</u> · <u>https://afdian.com/a/8093a</u>
-    </a>
   </footer>
 </div>
 
@@ -351,7 +476,28 @@
   const DROP_COOLDOWN = 0.28;    // 掉落冷却
   const OVER_SETTLE = 1.8;       // 结束后余韵物理的持续时间（秒），之后彻底停机
   const SPAWN_MAX = 4;           // 可掉落的最小果实最大索引（0..4，共 5 种）
-  const BONUS_WATERMELON = 100;  // 两个西瓜相撞的奖励分
+  const BONUS_WATERMELON = 100;  // 两个顶级角色相撞的奖励分
+  const REVIVE_LEVEL = 8;        // 复活币硬性门槛：本局必须合成过倒数第二大（索引 8）
+  // 复活清除线：危险线以下那块区域的上方 2/3。
+  // 顶边高过这条线的球体在复活时全部消失，只留下最底部 1/3 的地基。
+  const REVIVE_CLEAR_Y = DEATH_Y + (H - DEATH_Y) * 2 / 3;   // 96 + 336 = 432
+  const HINT_DEFAULT = '按住拖动瞄准 · 松手掉落';
+
+  // 商店道具。定价依据实测经济：一局正常对局峰值约 900~1300 分，
+  // 合成出倒数第二大（门槛达成）的那一刻手上约 600 分。
+  //   · 最便宜的也不能随手就买（90 ≈ 一次中大型合成的收益）
+  //   · 复活币 450：门槛达成时「省着花刚好买得起」，既不廉价也不至于买不到
+  const PROPS = [
+    { id: 'bounce',  icon: '🎈', name: '弹跳打乱', price: 90,
+      desc: '全场果实弹起，顺手把顺序打乱' },
+    { id: 'choose',  icon: '🎯', name: '指定下一个', price: 180,
+      desc: '自己挑选下一个掉落的角色' },
+    { id: 'upgrade', icon: '🔴', name: '升级红球', price: 300,
+      desc: '掉一颗红球，碰到谁就把谁升一级' },
+    { id: 'revive',  icon: '🪙', name: '复活币', price: 450,
+      desc: '倒地后清除上方 2/3 区域，继续这一局',
+      gate: true }   // 额外硬性门槛，文案在渲染商店时用 FRUITS[REVIVE_LEVEL].n 生成
+  ];
 
   // 进化链：10 级，图片已内嵌成 base64（见文件末尾 __SUIKA_SPRITES），
   // c = 该图的视觉主色（粒子/波纹/瞄准线用），l = 提亮版（占位与点缀用）
@@ -573,6 +719,7 @@
      ============================================================ */
   let balls = [];          // 所有果实
   let mergeQueue = [];     // 本步待合成的一对
+  let upgradeQueue = [];   // 本步升级红球的命中
   let particles = [];      // 果汁粒子
   let ripples = [];        // 合成波纹
   let floats = [];         // 飘分文字
@@ -587,7 +734,8 @@
       age: 0, dead: false, pop: 0,
       cnx: 0, cny: 0, touching: false,
       restT: 0, glow: 0,
-      squash: 0, snx: 0, sny: 1        // 撞击挤压的方向与强度（视觉弹性）
+      squash: 0, snx: 0, sny: 1,       // 撞击挤压的方向与强度（视觉弹性）
+      special: null, pendingUp: false  // 升级红球等特殊物件
     };
   }
 
@@ -601,6 +749,46 @@
   function queueMerge(a, b) {
     a.dead = true; b.dead = true;
     mergeQueue.push([a, b]);
+  }
+
+  // 升级红球命中：红球消失，目标升一级（同一目标一步内只升一次）
+  function queueUpgrade(up, tgt) {
+    if (up.dead || tgt.dead || tgt.pendingUp) return;
+    up.dead = true;
+    tgt.pendingUp = true;
+    upgradeQueue.push([up, tgt]);
+  }
+
+  function processUpgrades() {
+    if (!upgradeQueue.length) return;
+    const list = upgradeQueue;
+    upgradeQueue = [];
+    for (let i = 0; i < list.length; i++) {
+      const up = list[i][0], tgt = list[i][1];
+      tgt.pendingUp = false;
+      if (tgt.dead) continue;
+      const cx = (up.x + tgt.x) / 2, cy = (up.y + tgt.y) / 2;
+      if (tgt.level >= MAX_LEVEL) {          // 已经是最大的了，直接折成积分
+        addScore(30, cx, cy);
+        burst(cx, cy, '#ff6b6b', 12, 1);
+        continue;
+      }
+      const lv = tgt.level + 1;
+      const f = FRUITS[lv];
+      tgt.level = lv;                        // 原地升级：半径与质量同步变大
+      tgt.r = f.r;
+      tgt.mass = f.r * f.r;
+      tgt.invMass = 1 / tgt.mass;
+      tgt.pop = 1;
+      tgt.glow = 1;
+      tgt.restT = 0;
+      if (lv > maxLevel) maxLevel = lv;
+      addScore(POINTS[lv], tgt.x, tgt.y);
+      burst(tgt.x, tgt.y, f.c, 14 + lv, 1.2);
+      ripples.push({ x: tgt.x, y: tgt.y, r: tgt.r * 0.5, max: tgt.r * 2.1, life: 1, color: f.c });
+      Sound.play('merge', lv);
+    }
+    balls = balls.filter(b => !b.dead);
   }
 
   // ---- 与墙壁/地面碰撞（无限质量） ----
@@ -650,8 +838,13 @@
     if (d < 1e-6) { nx = 0; ny = -1; d = 1e-6; }
     else { nx = dx / d; ny = dy / d; }
 
+    // 升级红球：碰到任何东西都让对方升一级
+    if (a.special === 'upgrade' || b.special === 'upgrade') {
+      if (allowMerge) queueUpgrade(a.special === 'upgrade' ? a : b, a.special === 'upgrade' ? b : a);
+      return;
+    }
     // 同级相撞 → 合成
-    if (allowMerge && a.level === b.level) { queueMerge(a, b); return; }
+    if (allowMerge && a.level === b.level && a.level >= 0 && b.level >= 0) { queueMerge(a, b); return; }
 
     const pen = rsum - d;
     const invSum = a.invMass + b.invMass;
@@ -797,6 +990,7 @@
       }
     }
     processMerges();
+    processUpgrades();
 
     for (let i = 0; i < balls.length; i++) {
       updateRolling(balls[i], h);
@@ -808,7 +1002,8 @@
      6. 游戏状态
      ============================================================ */
   let state = 'playing';          // playing | over
-  let score = 0;
+  let score = 0;                  // 本局分数：只增不减（商店消费不动它）
+  let coins = 0;                  // 金币（兑换分）：与得分 1:1 增长，只用于商店消费
   let best = parseInt(store.get(KEY_BEST, '0'), 10) || 0;
   let pendingLevel = randLevel(); // 当前待掉落的果实
   let nextLevel = randLevel();    // 下一个
@@ -819,7 +1014,12 @@
   let newRecord = false;          // 本局是否刷新了最高分
   let dropTimer = 0;              // 用于瞄准虚线的轻微动画
   let badgeDim = false;           // 「下一个」徽章是否淡出
-  let maxLevel = 0;               // 本局合成出的最高等级（结算面板展示）
+  let maxLevel = 0;               // 本局合成出的最高等级（结算面板展示 / 复活币门槛）
+  let graceT = 0;                 // 复活后的危险线豁免时间
+  let shopOpen = false;           // 商店打开时暂停物理
+  let shopDotOn = false;          // 小红点当前状态
+  let pointerHeld = false;        // 按住中（松手才掉落）
+  const owned = { bounce: 0, choose: 0, upgrade: 0, revive: 0 };   // 道具存量
 
   const $ = id => document.getElementById(id);
   const scoreValue = $('scoreValue');
@@ -833,6 +1033,13 @@
   const soundBtn = $('soundBtn');
   const badge = document.querySelector('.badge');
   const chainEl = $('chain');
+  const shopEl = $('shop');
+  const shopList = $('shopList');
+  const shopCoins = $('shopCoins');
+  const shopPicker = $('shopPicker');
+  const reviveBox = $('reviveBox');
+  const shopBtn = $('shopBtn');
+  const shopDot = $('shopDot');
 
   function syncBest() { bestValue.textContent = best; }
   function refreshNext() {
@@ -845,9 +1052,11 @@
   }
   function addScore(n, x, y) {
     score += n;
+    coins += n;                   // 每得 1 分，商店里就多 1 枚可用金币
     scoreValue.textContent = score;
     scoreValue.classList.remove('bump'); void scoreValue.offsetWidth; scoreValue.classList.add('bump');
     if (score > best) { best = score; newRecord = true; store.set(KEY_BEST, String(best)); syncBest(); }
+    refreshShopDot();
     if (typeof x === 'number') {
       // 轻微错位，避免同一瞬间多个飘分文字完全叠在一起
       floats.push({
@@ -872,10 +1081,16 @@
   function beginGame() {
     balls = [];
     mergeQueue = [];
+    upgradeQueue = [];
     particles = [];
     ripples = [];
     floats = [];
     score = 0;
+    coins = 0;
+    owned.bounce = 0; owned.choose = 0; owned.upgrade = 0; owned.revive = 0;
+    graceT = 0;
+    pointerHeld = false;
+    closeShop();
     dangerT = 0;
     cooldown = 0;
     newRecord = false;
@@ -886,11 +1101,14 @@
     badge.classList.remove('dim');
     maxLevel = 0;
     state = 'playing';
+    reviveBox.innerHTML = '';
+    refreshShopDot();
     pendingLevel = randLevel();
     nextLevel = randLevel();
     aimX = W / 2;
     scoreValue.textContent = '0';
     overlay.classList.remove('show');
+    hint.textContent = HINT_DEFAULT;
     hint.classList.remove('hide');
     refreshNext();
   }
@@ -898,19 +1116,71 @@
   function gameOver() {
     if (state === 'over') return;
     state = 'over';
+    pointerHeld = false;
+    closeShop();
     finalScore.textContent = score;
     // 结算面板展示本局合出的最高等级角色
     overSprite.src = spriteURL(maxLevel);
     overSprite.alt = FRUITS[maxLevel].n;
     recordLine.textContent = newRecord ? '🎉 新纪录！' : '历史最高 ' + best;
+    renderRevive();
     overlay.classList.add('show');
     stage.classList.add('shake');
     setTimeout(() => stage.classList.remove('shake'), 560);
     Sound.play('over');
   }
 
+  // ---------- 复活币：硬性门槛 = 本局合成过倒数第二大 ----------
+  function reviveGated() { return maxLevel >= REVIVE_LEVEL; }
+
+  function renderRevive() {
+    const p = PROPS[3];
+    if (owned.revive > 0) {
+      reviveBox.innerHTML = '<button class="revive-btn" id="reviveBtn">🪙 使用复活币继续（剩 ' + owned.revive + ' 枚）</button>';
+      reviveBox.querySelector('#reviveBtn').addEventListener('click', () => doRevive(true));
+    } else if (reviveGated() && coins >= p.price) {
+      reviveBox.innerHTML = '<button class="revive-btn" id="reviveBtn">🪙 花 ' + p.price + ' 金币复活继续</button>';
+      reviveBox.querySelector('#reviveBtn').addEventListener('click', () => doRevive(false));
+    } else if (!reviveGated()) {
+      reviveBox.innerHTML = '<p class="revive-hint">🪙 复活币需先合成出「' + FRUITS[REVIVE_LEVEL].n + '」<br>本局最高只到「' + FRUITS[maxLevel].n + '」</p>';
+    } else {
+      reviveBox.innerHTML = '<p class="revive-hint">🪙 复活需要 ' + p.price + ' 金币<br>金币还差 ' + (p.price - coins) + '</p>';
+    }
+  }
+
+  function doRevive(useCoin) {
+    if (state !== 'over') return;
+    if (useCoin) { if (owned.revive <= 0) return; owned.revive--; }
+    else {
+      const p = PROPS[3];
+      if (!reviveGated() || coins < p.price) return;
+      coins -= p.price;                 // 只花金币，分数保持不变
+    }
+    // 清除「危险线以下区域」上方 2/3 内的所有球体：
+    // 顶边高过这条清除线（y < REVIVE_CLEAR_Y）的一律消失，只留下最下面 1/3
+    const before = balls.length;
+    balls = balls.filter(b => (b.y - b.r) >= REVIVE_CLEAR_Y);
+    dangerT = 0;
+    graceT = 1.6;
+    overT = 0;
+    state = 'playing';
+    reviveBox.innerHTML = '';
+    overlay.classList.remove('show');
+    stage.classList.remove('shake');
+    hint.textContent = '复活成功 · 已清除上方区域';
+    hint.classList.remove('hide');
+    setTimeout(() => { if (state === 'playing') hint.classList.add('hide'); }, 2600);
+    Sound.play('merge', 6);
+    for (let i = 0; i < 30; i++) {
+      burst(rand(30, W - 30), rand(DEATH_Y, REVIVE_CLEAR_Y), '#ffd98a', 3, 1.1);
+    }
+    ripples.push({ x: W / 2, y: (DEATH_Y + REVIVE_CLEAR_Y) / 2, r: 20, max: W * 0.62, life: 1, color: '#f0b64c' });
+    return before - balls.length;
+  }
+
   function checkDanger(h) {
     if (state !== 'playing') return;
+    if (graceT > 0) { graceT = Math.max(0, graceT - h); dangerT = 0; return; }
     let danger = false;
     for (let i = 0; i < balls.length; i++) {
       const b = balls[i];
@@ -954,39 +1224,30 @@
     aimTo((clientX - rect.left) / rect.width * W);
   }
 
-  // 触屏/触控笔：警戒线以上按住 = 拖动瞄准，警戒线以下点按 = 掉落
-  // （鼠标有悬停，保持原来的“移动瞄准 + 点击掉落”，不受分区限制）
-  let dragging = false;
-  let touchMode = false;
-
-  function useTouchHint() {
-    if (touchMode) return;
-    touchMode = true;
-    hint.textContent = '上方按住拖动瞄准 · 点下方掉落';
-    hint.classList.remove('hide');
-    setTimeout(() => { if (state === 'playing') hint.classList.add('hide'); }, 5200);
+  // 交互：全屏任意位置「按住 = 拖动瞄准，松手 = 掉落」
+  // 鼠标额外保留悬停瞄准（不按键时跟随鼠标）
+  function beginHold(clientX, clientY) {
+    if (state !== 'playing' || shopOpen) return;
+    pointerHeld = true;
+    const p = toLogical(clientX, clientY);
+    if (p) aimTo(p.x);
   }
 
-  function onPress(clientX, clientY, isTouch) {
-    if (isTouch) useTouchHint();
-    const p = toLogical(clientX, clientY);
-    if (!p) return;
-    if (isTouch && p.y < DEATH_Y) {   // 警戒线以上：进入拖动瞄准，不掉落
-      dragging = true;
-      aimTo(p.x);
-      return;
-    }
-    dragging = false;
-    aimTo(p.x);
+  function moveHold(clientX) {
+    if (shopOpen) return;
+    if (pointerHeld) { aimToClient(clientX); return; }
+    if (!touchLike) aimToClient(clientX);   // 鼠标悬停瞄准
+  }
+
+  function releaseHold(clientX) {
+    if (!pointerHeld) return;
+    pointerHeld = false;
+    if (state !== 'playing' || shopOpen) return;
+    if (typeof clientX === 'number') aimToClient(clientX);
     drop();
   }
 
-  function onDrag(clientX) {
-    if (dragging) { aimToClient(clientX); return; }
-    if (!touchMode) aimToClient(clientX);   // 鼠标悬停瞄准
-  }
-
-  function endDrag() { dragging = false; }
+  let touchLike = false;                    // 一旦用过触屏，就不再走“悬停瞄准”
 
   function drop() {
     if (state !== 'playing' || cooldown > 0) return;
@@ -1005,34 +1266,42 @@
   }
 
   stage.addEventListener('pointermove', e => {
-    if (e.pointerType === 'mouse' && dragging) endDrag();
-    onDrag(e.clientX);
+    moveHold(e.clientX);
   }, { passive: true });
   stage.addEventListener('pointerdown', e => {
-    // 只响应主指针的左键：右键/中键/触控板双指点按不应掉落果实
+    // 只响应主指针的左键：右键/中键/触控板双指点按不应掉落
     if (e.button !== 0 || e.isPrimary === false) return;
+    if (state === 'over' || shopOpen) return;
     Sound.unlock();
-    if (state === 'over') return;
     if (e.pointerType !== 'mouse') {
+      touchLike = true;
       try { stage.setPointerCapture(e.pointerId); } catch (err) { /* 忽略 */ }
     }
-    onPress(e.clientX, e.clientY, e.pointerType !== 'mouse');
+    beginHold(e.clientX, e.clientY);
     if (e.cancelable) e.preventDefault();
   });
-  stage.addEventListener('pointerup', endDrag);
-  stage.addEventListener('pointercancel', endDrag);
-  stage.addEventListener('lostpointercapture', endDrag);
+  stage.addEventListener('pointerup', e => {
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    releaseHold(e.clientX);
+  });
+  // 取消（系统打断 / 手势被抢走）不掉落
+  stage.addEventListener('pointercancel', () => { pointerHeld = false; });
+  stage.addEventListener('lostpointercapture', () => { pointerHeld = false; });
   // 触屏兜底（部分老浏览器没有 PointerEvent）
   if (!window.PointerEvent) {
-    stage.addEventListener('touchmove', e => { if (e.touches.length === 1) onDrag(e.touches[0].clientX); }, { passive: true });
+    stage.addEventListener('touchmove', e => { if (e.touches.length === 1) moveHold(e.touches[0].clientX); }, { passive: true });
     stage.addEventListener('touchstart', e => {
       if (e.touches.length !== 1) return;
+      if (state === 'over' || shopOpen) return;
       Sound.unlock();
-      if (state === 'over') return;
-      onPress(e.touches[0].clientX, e.touches[0].clientY, true);
+      touchLike = true;
+      beginHold(e.touches[0].clientX, e.touches[0].clientY);
     }, { passive: true });
-    stage.addEventListener('touchend', endDrag);
-    stage.addEventListener('touchcancel', endDrag);
+    stage.addEventListener('touchend', e => {
+      const t = e.changedTouches && e.changedTouches[0];
+      releaseHold(t ? t.clientX : undefined);
+    });
+    stage.addEventListener('touchcancel', () => { pointerHeld = false; });
   }
   stage.addEventListener('contextmenu', e => e.preventDefault());
   stage.addEventListener('dragstart', e => e.preventDefault());
@@ -1063,6 +1332,146 @@
   soundBtn.addEventListener('click', e => { e.stopPropagation(); toggleSound(); });
   $('restartBtn').addEventListener('click', e => { e.stopPropagation(); beginGame(); });
   $('againBtn').addEventListener('click', () => beginGame());
+
+  /* ============================================================
+     7.5 小商店与道具
+     ============================================================ */
+  const propById = id => PROPS.filter(p => p.id === id)[0];
+
+  // 有任意一件买得起（且没被门槛锁住）时，商店按钮上挂小红点
+  function anyAffordable() {
+    for (const p of PROPS) {
+      if (p.gate && !reviveGated()) continue;
+      if (coins >= p.price) return true;
+    }
+    return false;
+  }
+  function refreshShopDot() {
+    const show = anyAffordable() && !shopOpen;
+    if (show !== shopDotOn) {
+      shopDotOn = show;
+      shopDot.classList.toggle('show', show);
+    }
+  }
+
+  function renderShop() {
+    shopCoins.textContent = coins;
+    let html = '';
+    for (const p of PROPS) {
+      const n = owned[p.id];
+      const locked = !!p.gate && !reviveGated();
+      const afford = coins >= p.price;
+      const canUse = n > 0 && p.id !== 'revive';     // 复活币只在倒地后用
+      html += '<div class="shop-row">'
+        + '<span class="si">' + p.icon + '</span>'
+        + '<div class="sx"><b>' + p.name + '</b><small>' + p.desc + '</small>'
+        + (locked ? '<span class="shop-gate">🔒 需先合成出「' + FRUITS[REVIVE_LEVEL].n + '」</span>' : '')
+        + '</div><div class="sa">'
+        + (canUse ? '<button class="shop-buy use" data-use="' + p.id + '">使用</button>' : '')
+        + '<button class="shop-buy" data-buy="' + p.id + '"'
+        + ((!afford || locked) ? ' disabled' : '') + '>' + p.price + ' 金币</button>'
+        + '<span class="shop-own">持有 ' + n + '</span>'
+        + '</div></div>';
+    }
+    shopList.innerHTML = html;
+  }
+
+  shopList.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    if (b.dataset.buy) buyProp(b.dataset.buy);
+    else if (b.dataset.use) useProp(b.dataset.use);
+  });
+
+  function buyProp(id) {
+    const p = propById(id);
+    if (!p) return;
+    if (p.gate && !reviveGated()) return;      // 硬性门槛：金币够也不行
+    if (coins < p.price) return;
+    coins -= p.price;                          // 只扣金币，分数保持在只增不减
+    owned[id]++;
+    Sound.play('drop');
+    renderShop();
+    refreshShopDot();
+  }
+
+  function useProp(id) {
+    if (owned[id] <= 0) return;
+    if (id === 'choose') { showPicker(); return; }   // 选完再扣
+    if (id === 'revive') return;                     // 复活币不能主动使用
+    owned[id]--;
+    if (id === 'bounce') doBounce();
+    else if (id === 'upgrade') doUpgradeBall();
+    renderShop();
+  }
+
+  // 🎈 弹跳打乱：全部弹起并重新落位
+  function doBounce() {
+    for (const b of balls) {
+      b.vy = -rand(640, 950);
+      b.vx += rand(-285, 285);
+      b.omega += rand(-8, 8);
+      b.squash = 0.85; b.snx = 0; b.sny = -1;
+      b.restT = 0;
+    }
+    Sound.play('merge', 3);
+    ripples.push({ x: W / 2, y: H - 60, r: 24, max: W * 0.7, life: 1, color: '#8fd9b6' });
+  }
+
+  // 🔴 升级红球：掉一颗红球，碰到谁就把谁升一级
+  const UPGRADE_R = 20;
+  function makeUpgradeBall(x, y, vx, vy) {
+    const b = makeBall(x, y, 0, vx, vy);
+    b.special = 'upgrade';
+    b.r = UPGRADE_R;
+    b.mass = UPGRADE_R * UPGRADE_R;
+    b.invMass = 1 / b.mass;
+    b.angle = 0;
+    return b;
+  }
+  function doUpgradeBall() {
+    balls.push(makeUpgradeBall(aimX, UPGRADE_R + DROP_PAD, 0, 130));
+    Sound.play('drop');
+  }
+
+  // 🎯 指定下一个掉落
+  function showPicker() {
+    let html = '<span class="pk-tip">选一个作为下一个掉落（消耗 1 个道具）</span>';
+    for (let i = 0; i <= SPAWN_MAX; i++) {
+      html += '<img src="' + spriteURL(i) + '" data-lv="' + i + '" alt="' + FRUITS[i].n + '" title="' + FRUITS[i].n + '">';
+    }
+    shopPicker.innerHTML = html;
+    shopPicker.classList.add('show');
+  }
+  shopPicker.addEventListener('click', e => {
+    const img = e.target.closest('img');
+    if (!img) return;
+    owned.choose--;
+    pendingLevel = +img.dataset.lv;
+    shopPicker.classList.remove('show');
+    shopPicker.innerHTML = '';
+    renderShop();
+    Sound.play('drop');
+  });
+
+  function openShop() {
+    if (state !== 'playing') return;
+    shopOpen = true;
+    pointerHeld = false;
+    shopEl.classList.add('show');
+    renderShop();
+    refreshShopDot();
+  }
+  function closeShop() {
+    shopOpen = false;
+    shopEl.classList.remove('show');
+    shopPicker.classList.remove('show');
+    shopPicker.innerHTML = '';
+    refreshShopDot();
+  }
+  shopBtn.addEventListener('click', e => { e.stopPropagation(); openShop(); });
+  $('shopClose').addEventListener('click', e => { e.stopPropagation(); closeShop(); });
+  shopEl.addEventListener('pointerdown', e => e.stopPropagation());
 
   /* ============================================================
      8. 渲染
@@ -1210,7 +1619,38 @@
     ctx.closePath();
   }
 
+  // 升级红球：纯 CSS 风格的红球 + ↑ 符号
+  function drawUpgradeBall(b) {
+    const pop = b.pop > 0 ? 1 + 0.16 * Math.sin(b.pop * Math.PI) : 1;
+    const r = b.r * pop;
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    const gl = ctx.createRadialGradient(0, 0, r * 0.4, 0, 0, r * 1.9);
+    gl.addColorStop(0, 'rgba(255,90,90,0.45)');
+    gl.addColorStop(1, 'rgba(255,90,90,0)');
+    ctx.fillStyle = gl;
+    ctx.beginPath(); ctx.arc(0, 0, r * 1.9, 0, TAU); ctx.fill();
+
+    const g = ctx.createRadialGradient(-r * 0.34, -r * 0.38, r * 0.1, 0, 0, r * 1.05);
+    g.addColorStop(0, '#ffd6d6');
+    g.addColorStop(0.42, '#ff6b6b');
+    g.addColorStop(1, '#cf2626');
+    ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU);
+    ctx.fillStyle = g; ctx.fill();
+    ctx.lineWidth = Math.max(1.6, r * 0.1);
+    ctx.strokeStyle = 'rgba(255,255,255,0.92)';
+    ctx.stroke();
+
+    ctx.fillStyle = '#fff';
+    ctx.font = '800 ' + (r * 1.2) + 'px system-ui,"PingFang SC",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('↑', 0, r * 0.06);
+    ctx.restore();
+  }
+
   function drawBall(b) {
+    if (b.special === 'upgrade') { drawUpgradeBall(b); return; }
     const pop = b.pop > 0 ? 1 + 0.16 * Math.sin(b.pop * Math.PI) : 1;
     if (b.glow > 0) {
       ctx.save();
@@ -1222,30 +1662,6 @@
       ctx.restore();
     }
     drawFruit(b.x, b.y, b.r, b.level, b.angle, pop, b.squash, b.snx, b.sny);
-  }
-
-  // 触屏：把上半区（警戒线以上）画成“按住可拖动瞄准”的区域（画在果实下面）
-  function drawTouchZone() {
-    if (!touchMode || state !== 'playing') return;
-    ctx.save();
-    ctx.setLineDash([]);
-    ctx.globalAlpha = dragging ? 0.40 : 0.20;
-    ctx.fillStyle = dragging ? 'rgba(255,170,202,0.8)' : 'rgba(255,205,225,0.7)';
-    ctx.fillRect(0, 0, W, DEATH_Y);
-    ctx.globalAlpha = dragging ? 0.9 : 0.4;
-    ctx.lineWidth = 1.5;
-    ctx.strokeStyle = 'rgba(255,140,180,0.95)';
-    ctx.beginPath();
-    ctx.moveTo(0, DEATH_Y);
-    ctx.lineTo(W, DEATH_Y);
-    ctx.stroke();
-    ctx.globalAlpha = dragging ? 0.95 : 0.6;
-    ctx.fillStyle = '#b8456e';
-    ctx.font = '600 11px "PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif';
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'bottom';
-    ctx.fillText(dragging ? '拖动瞄准中…' : '按住这里拖动瞄准', W - 8, DEATH_Y - 5);
-    ctx.restore();
   }
 
   function drawAim() {
@@ -1262,10 +1678,10 @@
 
     ctx.save();
     // 瞄准虚线（拖动时更粗更亮）
-    ctx.globalAlpha = dragging ? 0.8 : (ready ? 0.42 : 0.14);
+    ctx.globalAlpha = pointerHeld ? 0.8 : (ready ? 0.42 : 0.14);
     ctx.setLineDash([7, 11]);
     ctx.lineDashOffset = -dropTimer * 26;
-    ctx.lineWidth = dragging ? 3 : 2;
+    ctx.lineWidth = pointerHeld ? 3 : 2;
     ctx.strokeStyle = f.c;
     ctx.beginPath();
     ctx.moveTo(x, f.r * 2 + 10);
@@ -1326,7 +1742,6 @@
   function render(dt) {
     ctx.clearRect(0, 0, W, H);
     drawBackdrop();
-    drawTouchZone();     // 触屏拖动区提示（画在果实下面）
     drawDeathLine();
     drawOrder.length = 0;
     for (let i = 0; i < balls.length; i++) drawOrder.push(balls[i]);
@@ -1376,7 +1791,8 @@
     if (cooldown > 0) cooldown = Math.max(0, cooldown - dt);
 
     if (state === 'playing') {
-      acc += dt;
+      if (shopOpen) { acc = 0; }              // 逛商店时暂停物理，不会被偷家
+      acc += shopOpen ? 0 : dt;
       let steps = 0;
       while (acc >= DT && steps < MAX_STEPS) {
         physicsStep(DT);
@@ -1421,12 +1837,25 @@
     get balls() { return balls.map(b => ({ x: b.x, y: b.y, r: b.r, level: b.level, vx: b.vx, vy: b.vy, sq: +b.squash.toFixed(2) })); },
     get pending() { return pendingLevel; },
     get maxLevel() { return maxLevel; },
+    get coins() { return coins; },
+    get owned() { return Object.assign({}, owned); },
+    get shopOpen() { return shopOpen; },
+    get pointerHeld() { return pointerHeld; },
+    get props() { return PROPS.map(p => ({ id: p.id, price: p.price, gate: !!p.gate })); },
+    buy(id) { buyProp(id); return coins; },
+    use(id) { useProp(id); return coins; },
+    openShop, closeShop,
+    revive(useCoin) { return doRevive(useCoin !== false); },
+    addScore(n) { addScore(n); },
+    get dot() { return shopDotOn; },
     get spritesReady() { return FRUITS.map((f, i) => spriteReady(i)); },
     get sound() { return Sound.sampleState(); },
     get effects() { return { particles: particles.length, ripples: ripples.length, floats: floats.length }; },
     get config() { return { W, H, DEATH_Y, GRAVITY, DT, radii: FRUITS.map(f => f.r), levels: FRUITS.length }; },
     spawn(level, x, y) { const b = makeBall(x, y, level); b.age = 1; balls.push(b); return balls.length; },
     aimAt(x) { aimTo(x); },
+    hold(clientX, clientY) { beginHold(clientX, clientY); },
+    releaseHold(clientX) { releaseHold(clientX); },
     drop,
     step(n) {
       // 与主循环保持一致：结束后只跑运动与碰撞，不再合成加分
@@ -1434,6 +1863,7 @@
       return balls.length;
     },
     restart: beginGame,
+    ready() { cooldown = 0; },   // 测试用：清掉掉落冷却
     forceDanger(t) { dangerT = t === undefined ? DANGER_LIMIT : t; }
   };
 
