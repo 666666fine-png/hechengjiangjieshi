@@ -179,6 +179,12 @@
     transition:opacity .4s ease, transform .4s ease;
   }
   .hint.hide{ opacity:0; transform:translateX(-50%) translateY(8px); }
+  /* 升级红球瞄准提示：移到顶部，避免遮住下方的目标果实 */
+  .hint.action{
+    bottom:auto; top:72px;
+    font-size:10.5px; letter-spacing:0; color:#cf3b57;
+    padding:5px 12px; max-width:92%; white-space:normal; text-align:center; line-height:1.35;
+  }
   @keyframes floaty{ 0%,100%{ margin-bottom:0 } 50%{ margin-bottom:6px } }
 
   /* ---------- 结束面板 ---------- */
@@ -576,6 +582,8 @@
   // 顶边高过这条线的球体在复活时全部消失，只留下最底部 1/3 的地基。
   const REVIVE_CLEAR_Y = DEATH_Y + (H - DEATH_Y) * 2 / 3;   // 96 + 336 = 432
   const HINT_DEFAULT = '按住拖动瞄准 · 松手掉落';
+  const HINT_UPGRADE = '🔴 拖动选好落点 · 松手投出 · 轻点屏幕或按 Esc 取消';
+  const UPGRADE_R = 20;          // 升级红球半径
 
   // 商店道具。定价依据实测经济：一局正常对局峰值约 900~1300 分，
   // 合成出倒数第二大（门槛达成）的那一刻手上约 600 分。
@@ -1120,6 +1128,7 @@
   let donationOpen = false;       // 打赏方式面板打开时暂停物理
   let shopDotOn = false;          // 小红点当前状态
   let pointerHeld = false;        // 按住中（松手才掉落）
+  let upgradeAiming = false;      // 升级红球瞄准中（等玩家选好落点再掉）
   const owned = { bounce: 0, choose: 0, upgrade: 0, revive: 0 };   // 道具存量
 
   // 商店 / 打赏面板等浮层打开时：暂停物理，同时屏蔽掉落操作
@@ -1194,6 +1203,7 @@
     owned.bounce = 0; owned.choose = 0; owned.upgrade = 0; owned.revive = 0;
     graceT = 0;
     pointerHeld = false;
+    upgradeAiming = false;
     closeShop();
     dangerT = 0;
     cooldown = 0;
@@ -1221,6 +1231,7 @@
     if (state === 'over') return;
     state = 'over';
     pointerHeld = false;
+    upgradeAiming = false;
     closeShop();
     closeDonation();          // 打赏面板打开时也要收起，避免挡住结算面板
     finalScore.textContent = score;
@@ -1274,7 +1285,7 @@
     stage.classList.remove('shake');
     hint.textContent = '复活成功 · 已清除上方区域';
     hint.classList.remove('hide');
-    setTimeout(() => { if (state === 'playing') hint.classList.add('hide'); }, 2600);
+    setTimeout(() => { if (state === 'playing' && !upgradeAiming) hint.classList.add('hide'); }, 2600);
     Sound.play('merge', 6);
     for (let i = 0; i < 30; i++) {
       burst(rand(30, W - 30), rand(DEATH_Y, REVIVE_CLEAR_Y), '#ffd98a', 3, 1.1);
@@ -1303,9 +1314,9 @@
   /* ============================================================
      7. 交互
      ============================================================ */
-  // 当前待掉落果实的可放置区间（随半径变化）
+  // 当前待掉落物的可放置区间（随半径变化；升级红球用红球半径）
   function aimLimits() {
-    const r = FRUITS[pendingLevel].r;
+    const r = upgradeAiming ? UPGRADE_R : FRUITS[pendingLevel].r;
     return { min: r + 2, max: W - r - 2 };
   }
 
@@ -1331,23 +1342,45 @@
 
   // 交互：全屏任意位置「按住 = 拖动瞄准，松手 = 掉落」
   // 鼠标额外保留悬停瞄准（不按键时跟随鼠标）
+  let holdMoved = false;                    // 按下后是否拖动过（用于「轻点取消」）
+  let holdStartX = 0;
+
   function beginHold(clientX, clientY) {
     if (state !== 'playing' || uiPaused()) return;
+    // 普通水果还有装填冷却；升级红球随时可以瞄准
+    if (!upgradeAiming && cooldown > 0) return;
     pointerHeld = true;
+    holdMoved = false;
+    holdStartX = clientX;
     const p = toLogical(clientX, clientY);
     if (p) aimTo(p.x);
   }
 
   function moveHold(clientX) {
     if (uiPaused()) return;
-    if (pointerHeld) { aimToClient(clientX); return; }
-    if (!touchLike) aimToClient(clientX);   // 鼠标悬停瞄准
+    if (pointerHeld) {
+      if (Math.abs(clientX - holdStartX) > 6) holdMoved = true;
+      aimToClient(clientX);
+      return;
+    }
+    // 升级瞄准时鼠标悬停也跟随，方便预览落点
+    if (!touchLike || upgradeAiming) aimToClient(clientX);
   }
 
   function releaseHold(clientX) {
     if (!pointerHeld) return;
     pointerHeld = false;
     if (state !== 'playing' || uiPaused()) return;
+    // 升级红球：原地点一下 = 取消（退还道具），拖动后松手 = 投出
+    if (upgradeAiming) {
+      const moved = holdMoved || (typeof clientX === 'number' && Math.abs(clientX - holdStartX) > 6);
+      if (!moved) { cancelUpgradeAim(); return; }
+      if (typeof clientX === 'number') aimToClient(clientX);
+      drop();
+      return;
+    }
+    // 普通水果冷却中松手不掉；升级红球不受冷却限制
+    if (!upgradeAiming && cooldown > 0) return;
     if (typeof clientX === 'number') aimToClient(clientX);
     drop();
   }
@@ -1355,7 +1388,9 @@
   let touchLike = false;                    // 一旦用过触屏，就不再走“悬停瞄准”
 
   function drop() {
-    if (state !== 'playing' || cooldown > 0) return;
+    if (state !== 'playing') return;
+    if (upgradeAiming) { dropUpgradeBall(); return; }   // 红球瞄准中：投出红球
+    if (cooldown > 0) return;
     const f = FRUITS[pendingLevel];
     const lim = aimLimits();
     const x = clamp(aimX, lim.min, lim.max);
@@ -1412,6 +1447,12 @@
   stage.addEventListener('dragstart', e => e.preventDefault());
 
   window.addEventListener('keydown', e => {
+    // 升级红球瞄准中：Esc 取消（道具退还）
+    if (upgradeAiming && e.key === 'Escape') {
+      cancelUpgradeAim();
+      e.preventDefault();
+      return;
+    }
     const step = 16;
     const lim = aimLimits();
     if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
@@ -1420,6 +1461,7 @@
       aimX = clamp(aimX + step, lim.min, lim.max); e.preventDefault();
     } else if (e.key === ' ' || e.key === 'ArrowDown' || e.key === 'Enter') {
       Sound.unlock();
+      if (upgradeAiming) { cancelUpgradeAim(); e.preventDefault(); return; }
       if (state === 'over') beginGame(); else drop();
       e.preventDefault();
     } else if (e.key === 'r' || e.key === 'R') {
@@ -1504,9 +1546,15 @@
     if (owned[id] <= 0) return;
     if (id === 'choose') { showPicker(); return; }   // 选完再扣
     if (id === 'revive') return;                     // 复活币不能主动使用
+    if (id === 'upgrade') {
+      // 红球要先选落点：关掉商店进入瞄准，松手才真的投出
+      if (!doUpgradeBall()) return;
+      owned.upgrade--;
+      closeShop();
+      return;
+    }
     owned[id]--;
     if (id === 'bounce') doBounce();
-    else if (id === 'upgrade') doUpgradeBall();
     renderShop();
   }
 
@@ -1524,7 +1572,6 @@
   }
 
   // 🔴 升级红球：掉一颗红球，碰到谁就把谁升一级
-  const UPGRADE_R = 20;
   function makeUpgradeBall(x, y, vx, vy) {
     const b = makeBall(x, y, 0, vx, vy);
     b.special = 'upgrade';
@@ -1534,9 +1581,57 @@
     b.angle = 0;
     return b;
   }
+  // 使用道具：进入瞄准模式，等玩家拖到想要的落点再松手投出
   function doUpgradeBall() {
-    balls.push(makeUpgradeBall(aimX, UPGRADE_R + DROP_PAD, 0, 130));
+    if (state !== 'playing') return false;
+    if (upgradeAiming) return false;
+    upgradeAiming = true;
+    pointerHeld = false;
+    dropTimer = 0;
+    aimX = clamp(aimX, aimLimits().min, aimLimits().max);
+    hint.textContent = HINT_UPGRADE;
+    hint.classList.add('action');
+    hint.classList.remove('hide');
+    Sound.play('merge', 1);
+    return true;
+  }
+  // 松手投出：位置就是此刻瞄准的位置
+  function dropUpgradeBall() {
+    upgradeAiming = false;
+    const x = clamp(aimX, aimLimits().min, aimLimits().max);
+    balls.push(makeUpgradeBall(x, UPGRADE_R + DROP_PAD, 0, 130));
+    hint.textContent = HINT_DEFAULT;
+    hint.classList.remove('action');
+    hint.classList.add('hide');
     Sound.play('drop');
+  }
+  // 取消，道具不消耗
+  function cancelUpgradeAim() {
+    if (!upgradeAiming) return;
+    upgradeAiming = false;
+    owned.upgrade++;
+    hint.textContent = HINT_DEFAULT;
+    hint.classList.remove('action');
+    hint.classList.add('hide');
+    renderShop();
+    refreshShopDot();
+    Sound.play('merge', 1);
+  }
+  // 松手时的落点预测：竖直向下最先碰到的那颗果实
+  function upgradeTargetAt(x) {
+    const R = UPGRADE_R;
+    let best = null, bestY = Infinity;
+    for (let i = 0; i < balls.length; i++) {
+      const b = balls[i];
+      if (b.dead || b.special) continue;
+      const dx = Math.abs(b.x - x);
+      const rr = R + b.r;
+      if (dx >= rr) continue;
+      const y = b.y - Math.sqrt(rr * rr - dx * dx);   // 红球圆心与它刚接触时的 y
+      if (y < R + DROP_PAD + 4) continue;             // 出生点就已经重叠的，忽略
+      if (y < bestY) { bestY = y; best = b; }
+    }
+    return best;
   }
 
   // 🎯 指定下一个掉落
@@ -1870,8 +1965,74 @@
     drawFruit(b.x, b.y, b.r, b.level, b.angle, pop, b.squash, b.snx, b.sny);
   }
 
+  // 升级红球瞄准时的落点提示：预测竖直向下最先碰到的果实
+  function drawUpgradeAim(x) {
+    const tgt = upgradeTargetAt(x);
+    if (!tgt) return;
+    const ty = tgt.y - tgt.r - UPGRADE_R;
+    ctx.save();
+    // 红球会一直落到这里
+    ctx.setLineDash([6, 9]);
+    ctx.lineDashOffset = -dropTimer * 30;
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = 'rgba(255,80,80,.9)';
+    ctx.beginPath();
+    ctx.moveTo(x, UPGRADE_R * 2 + 12);
+    ctx.lineTo(x, ty);
+    ctx.stroke();
+    // 目标果实的高亮圈
+    const pulse = 0.5 + 0.5 * Math.sin(dropTimer * 6);
+    ctx.setLineDash([]);
+    ctx.lineWidth = 3 + pulse * 1.5;
+    ctx.strokeStyle = 'rgba(255,70,70,' + (0.55 + pulse * 0.4).toFixed(2) + ')';
+    ctx.beginPath();
+    ctx.arc(tgt.x, tgt.y, tgt.r + 5 + pulse * 3, 0, TAU);
+    ctx.stroke();
+
+    // 目标上方的小标签「升级」，一眼看清哪颗会被升级
+    const label = '升级';
+    ctx.font = '800 12px system-ui,"PingFang SC",sans-serif';
+    const tw = ctx.measureText(label).width;
+    const bw = tw + 14, bh = 19;
+    let bx = tgt.x - bw / 2;
+    const by = tgt.y - tgt.r - bh - 10 - pulse * 3;
+    bx = Math.max(2, Math.min(W - bw - 2, bx));
+    ctx.fillStyle = '#ff4b57';
+    ctx.beginPath();
+    const rr2 = 7;
+    ctx.moveTo(bx + rr2, by);
+    ctx.lineTo(bx + bw - rr2, by);
+    ctx.quadraticCurveTo(bx + bw, by, bx + bw, by + rr2);
+    ctx.lineTo(bx + bw, by + bh - rr2);
+    ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw - rr2, by + bh);
+    ctx.lineTo(bx + rr2, by + bh);
+    ctx.quadraticCurveTo(bx, by + bh, bx, by + bh - rr2);
+    ctx.lineTo(bx, by + rr2);
+    ctx.quadraticCurveTo(bx, by, bx + rr2, by);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, bx + bw / 2, by + bh / 2 + 0.5);
+    ctx.restore();
+  }
+
   function drawAim() {
     if (state !== 'playing') return;
+
+    // ---- 升级红球瞄准中：位置完全由玩家控制 ----
+    if (upgradeAiming) {
+      const lim = aimLimits();
+      const x = clamp(aimX, lim.min, lim.max);
+      const y = UPGRADE_R + DROP_PAD + Math.sin(dropTimer * 3.2) * 2.2;
+      drawUpgradeAim(x);
+      ctx.save();
+      drawUpgradeBall({ x, y, r: UPGRADE_R, pop: 0 });
+      ctx.restore();
+      return;
+    }
+
     const f = FRUITS[pendingLevel];
     const lim = aimLimits();
     const x = clamp(aimX, lim.min, lim.max);
@@ -2047,6 +2208,8 @@
     get owned() { return Object.assign({}, owned); },
     get shopOpen() { return shopOpen; },
     get tipOpen() { return donationOpen; },
+    get upgradeAiming() { return upgradeAiming; },
+    upgradeTargetAt(x) { const b = upgradeTargetAt(x); return b ? { x: b.x, y: b.y, r: b.r, level: b.level } : null; },
     get pointerHeld() { return pointerHeld; },
     get props() { return PROPS.map(p => ({ id: p.id, price: p.price, gate: !!p.gate })); },
     buy(id) { buyProp(id); return coins; },
